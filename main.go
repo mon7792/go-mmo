@@ -11,6 +11,7 @@ import (
 	"golang.org/x/image/colornames"
 
 	"github.com/mon7792/go-mmo/engine/asset"
+	"github.com/mon7792/go-mmo/engine/render"
 )
 
 func run() {
@@ -73,21 +74,40 @@ func run() {
 		Left:  pixelgl.KeyA,
 		Right: pixelgl.KeyD,
 	}))
+	// camera init
+	camera := render.NewCamera(win, 0, 0)
 
+	zoomSpeed := 1.0
 	// game loop
 	for !win.JustPressed(pixelgl.KeyEscape) {
 
 		// make win blue
 		win.Clear(colornames.Skyblue)
 
+		// scroll
+		scroll := win.MouseScroll()
+		if scroll.Y != 0 {
+			camera.Zoom += zoomSpeed * scroll.Y
+		}
+
 		// handle input
 		for i := range hogs {
 			hogs[i].HandleInput(win)
 		}
+
+		// camera
+		camera.Position = hogs[0].Pos
+		camera.Update()
+
+		win.SetMatrix(camera.Matrix())
+
 		// draw the sprites
 		for i := range hogs {
 			hogs[i].Draw(win)
 		}
+
+		// camera
+		win.SetMatrix(pixel.IM)
 
 		// update the window
 		win.Update()
