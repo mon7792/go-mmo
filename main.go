@@ -15,6 +15,13 @@ import (
 	"github.com/mon7792/go-mmo/engine/tilemap"
 )
 
+// check panics if err is not nil
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func run() {
 	// all the game code goes here
 	fmt.Println("Hello, Pixel!")
@@ -29,9 +36,7 @@ func run() {
 	}
 
 	win, err := pixelgl.NewWindow(cfg)
-	if err != nil {
-		panic(err)
-	}
+	check(err)
 
 	win.SetSmooth(false)
 
@@ -41,60 +46,51 @@ func run() {
 	// load sprites
 	load := asset.Newload(os.DirFS("./"))
 	spriteSheet, err := load.SpriteSheet("packed.json")
-	if err != nil {
-		panic(err)
-	}
+	check(err)
+
+	// load a sprite
+	// spriteSheet.
 
 	// tilemap
 	tileSize := 16
 	mapSize := 100
-	tiles := make([][]tilemap.Tile, mapSize, mapSize)
-
-	grassSprite, err := spriteSheet.Get("grass.png")
-	if err != nil {
-		panic(err)
-	}
+	tiles := make([][]tilemap.Tile, mapSize)
 
 	for x := range tiles {
-		tiles[x] = make([]tilemap.Tile, mapSize, mapSize)
+		tiles[x] = make([]tilemap.Tile, mapSize)
 		for y := range tiles[x] {
-			tiles[x][y] = tilemap.Tile{
-				Type:   0,
-				Sprite: grassSprite,
-			}
+			tiles[x][y] = GetTileSprite(spriteSheet, GrassTile)
 		}
 	}
 
-	batch := pixel.NewBatch(&pixel.TrianglesData{}, grassSprite.Picture())
+	// batch := pixel.NewBatch(&pixel.TrianglesData{}, grassSprite.Picture())
+	batch := pixel.NewBatch(&pixel.TrianglesData{}, GetTileSprite(spriteSheet, GrassTile).Sprite.Picture())
 	tMap := tilemap.New(tiles, batch, tileSize)
 	// rebatch
 	tMap.Rebatch()
 
+	// create people/hogs
+	spawnPoint := pixel.V(float64(tileSize*mapSize/2), float64(tileSize*mapSize/2))
+
 	// 1st hog
 	hogSprites1, err := spriteSheet.Get("hedge-hog-mv-1.png")
-	if err != nil {
-		panic(err)
-	}
-	hogPosition1 := win.Bounds().Center()
+	check(err)
 
 	// 2nd hog
 	hogSprites2, err := spriteSheet.Get("hedge-hog-mv-2.png")
-	if err != nil {
-		panic(err)
-	}
-	hogPosition2 := win.Bounds().Center()
+	check(err)
 
 	// create a person list
 	var hogs []*Person
 
-	hogs = append(hogs, NewPerson(hogSprites1, hogPosition1, KeyBind{
+	hogs = append(hogs, NewPerson(hogSprites1, spawnPoint, KeyBind{
 		Up:    pixelgl.KeyUp,
 		Down:  pixelgl.KeyDown,
 		Left:  pixelgl.KeyLeft,
 		Right: pixelgl.KeyRight,
 	}))
 
-	hogs = append(hogs, NewPerson(hogSprites2, hogPosition2, KeyBind{
+	hogs = append(hogs, NewPerson(hogSprites2, spawnPoint, KeyBind{
 		Up:    pixelgl.KeyW,
 		Down:  pixelgl.KeyS,
 		Left:  pixelgl.KeyA,
@@ -147,6 +143,33 @@ func run() {
 
 func main() {
 	pixelgl.Run(run)
+}
+
+const (
+	GrassTile tilemap.TileType = iota
+	DirtTile
+	WaterTile
+)
+
+func GetTileSprite(spriteSheet *asset.SpriteSheet, tileType tilemap.TileType) tilemap.Tile {
+	spriteName := ""
+	switch tileType {
+	case GrassTile:
+
+		spriteName = "grass.png"
+	case DirtTile:
+		spriteName = "dirt.png"
+	case WaterTile:
+		spriteName = "water.png"
+	default:
+		panic("Unknown tile type")
+	}
+	sprite, err := spriteSheet.Get(spriteName)
+	check(err)
+	return tilemap.Tile{
+		Type:   tileType,
+		Sprite: sprite,
+	}
 }
 
 type KeyBind struct {
