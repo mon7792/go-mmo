@@ -12,6 +12,7 @@ import (
 
 	"github.com/mon7792/go-mmo/engine/asset"
 	"github.com/mon7792/go-mmo/engine/render"
+	"github.com/mon7792/go-mmo/engine/tilemap"
 )
 
 func run() {
@@ -43,6 +44,31 @@ func run() {
 	if err != nil {
 		panic(err)
 	}
+
+	// tilemap
+	tileSize := 16
+	mapSize := 100
+	tiles := make([][]tilemap.Tile, mapSize, mapSize)
+
+	grassSprite, err := spriteSheet.Get("grass.png")
+	if err != nil {
+		panic(err)
+	}
+
+	for x := range tiles {
+		tiles[x] = make([]tilemap.Tile, mapSize, mapSize)
+		for y := range tiles[x] {
+			tiles[x][y] = tilemap.Tile{
+				Type:   0,
+				Sprite: grassSprite,
+			}
+		}
+	}
+
+	batch := pixel.NewBatch(&pixel.TrianglesData{}, grassSprite.Picture())
+	tMap := tilemap.New(tiles, batch, tileSize)
+	// rebatch
+	tMap.Rebatch()
 
 	// 1st hog
 	hogSprites1, err := spriteSheet.Get("hedge-hog-mv-1.png")
@@ -102,6 +128,11 @@ func run() {
 		win.SetMatrix(camera.Matrix())
 
 		// draw the sprites
+
+		// draw the tilemap
+		tMap.Draw(win)
+
+		// draw the person
 		for i := range hogs {
 			hogs[i].Draw(win)
 		}
