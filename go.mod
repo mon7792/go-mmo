@@ -16,4 +16,5 @@ require (
 	github.com/ojrac/opensimplex-go v1.0.2 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/unitoftime/packer v0.0.0-20230818221437-1f2c1b1e4275 // indirect
+	nhooyr.io/websocket v1.8.10 // indirect
 )

@@ -1,0 +1,1 @@
+cd cmd/client & go generate & go run .

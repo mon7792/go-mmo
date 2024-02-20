@@ -3,7 +3,9 @@ package main
 //go:generate packer --input images --stats
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"math"
 	"os"
 	"time"
@@ -11,6 +13,7 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
+	"nhooyr.io/websocket"
 
 	"github.com/mon7792/go-mmo/engine/asset"
 	"github.com/mon7792/go-mmo/engine/pgen"
@@ -26,6 +29,35 @@ func check(err error) {
 }
 
 func run() {
+	// setup network
+	url := "ws://localhost:8000"
+
+	ctx := context.Background()
+	// connect to the server
+	c, resp, err := websocket.Dial(ctx, url, nil)
+	check(err)
+	defer c.Close(websocket.StatusInternalError, "the sky is falling")
+	log.Println("Connection response: ", resp)
+
+	conn := websocket.NetConn(ctx, c, websocket.MessageBinary)
+
+	go func() {
+		counter := byte(0)
+		for {
+			time.Sleep(1 * time.Second)
+
+			// send a message
+			n, err := conn.Write([]byte{counter})
+			if err != nil {
+				log.Println("Failed to send message: ", err)
+				return
+			}
+
+			log.Println("Number of bytes sent: ", n)
+			counter++
+		}
+	}()
+
 	// all the game code goes here
 	fmt.Println("Hello, Pixel!")
 
