@@ -4,13 +4,16 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
+	"time"
 
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/pixelgl"
 	"golang.org/x/image/colornames"
 
 	"github.com/mon7792/go-mmo/engine/asset"
+	"github.com/mon7792/go-mmo/engine/pgen"
 	"github.com/mon7792/go-mmo/engine/render"
 	"github.com/mon7792/go-mmo/engine/tilemap"
 )
@@ -48,18 +51,48 @@ func run() {
 	spriteSheet, err := load.SpriteSheet("packed.json")
 	check(err)
 
-	// load a sprite
-	// spriteSheet.
-
 	// tilemap
+	seed := time.Now().UTC().UnixNano()
+	octaves := []pgen.Octave{
+		{Freq: 0.01, Scale: 0.6},
+		{Freq: 0.05, Scale: 0.3},
+		{Freq: 0.1, Scale: 0.07},
+		{Freq: 0.2, Scale: 0.02},
+		{Freq: 0.4, Scale: 0.01},
+	}
+	exponent := 0.8
+	terrain := pgen.NewNoiseMap(seed, octaves, exponent)
+
+	waterLevel := 0.4
+	dirtLevel := waterLevel + 0.1
+
+	islandExponent := 2.0
 	tileSize := 16
-	mapSize := 100
+	mapSize := 200
 	tiles := make([][]tilemap.Tile, mapSize)
 
 	for x := range tiles {
 		tiles[x] = make([]tilemap.Tile, mapSize)
 		for y := range tiles[x] {
-			tiles[x][y] = GetTileSprite(spriteSheet, GrassTile)
+			height := terrain.Get(x, y)
+
+			// modify the height to represent the island
+			{
+				dx := float64(x)/float64(mapSize) - 0.5
+				dy := float64(y)/float64(mapSize) - 0.5
+				d := math.Sqrt(dx*dx+dy*dy) * 2
+				d = math.Pow(d, islandExponent)
+				height = (1 - d + height) / 2
+			}
+
+			// fmt.Println(height)
+			if height < waterLevel {
+				tiles[x][y] = GetTileSprite(spriteSheet, WaterTile)
+			} else if height < dirtLevel {
+				tiles[x][y] = GetTileSprite(spriteSheet, DirtTile)
+			} else {
+				tiles[x][y] = GetTileSprite(spriteSheet, GrassTile)
+			}
 		}
 	}
 
@@ -155,12 +188,11 @@ func GetTileSprite(spriteSheet *asset.SpriteSheet, tileType tilemap.TileType) ti
 	spriteName := ""
 	switch tileType {
 	case GrassTile:
-
 		spriteName = "grass.png"
-	case DirtTile:
-		spriteName = "dirt.png"
 	case WaterTile:
 		spriteName = "water.png"
+	case DirtTile:
+		spriteName = "dirt.png"
 	default:
 		panic("Unknown tile type")
 	}
