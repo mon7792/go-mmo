@@ -140,3 +140,7 @@ func (s *SpriteSheet) Get(name string) (*pixel.Sprite, error) {
 	}
 	return sprite, nil
 }
+
+func (s *SpriteSheet) Picture() pixel.Picture {
+	return s.picture
+}

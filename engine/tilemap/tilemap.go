@@ -2,7 +2,6 @@ package tilemap
 
 import (
 	"github.com/faiface/pixel"
-	"github.com/faiface/pixel/pixelgl"
 )
 
 type TileType int8
@@ -26,18 +25,17 @@ func New(tiles [][]Tile, batch *pixel.Batch, tileSize int) *TileMap {
 	}
 }
 
-func (tm *TileMap) Rebatch() {
-	for x := range tm.Tiles {
-		for y := range tm.Tiles[x] {
-			tile := tm.Tiles[x][y]
-			pos := pixel.V(float64(x*tm.TileSize), float64(y*tm.TileSize))
-
-			mat := pixel.IM.Moved(pos)
-			tile.Sprite.Draw(tm.batch, mat)
-		}
-	}
+func (tm *TileMap) Width() int {
+	return len(tm.Tiles)
 }
 
-func (tm *TileMap) Draw(win *pixelgl.Window) {
-	tm.batch.Draw(win)
+func (tm *TileMap) Height() int {
+	return len(tm.Tiles[0])
+}
+
+func (tm *TileMap) Get(x, y int) (Tile, bool) {
+	if x < 0 || x >= tm.Width() || y < 0 || y >= tm.Height() {
+		return Tile{}, false
+	}
+	return tm.Tiles[x][y], true
 }

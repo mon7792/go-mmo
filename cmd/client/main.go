@@ -131,8 +131,15 @@ func run() {
 	// batch := pixel.NewBatch(&pixel.TrianglesData{}, grassSprite.Picture())
 	batch := pixel.NewBatch(&pixel.TrianglesData{}, GetTileSprite(spriteSheet, GrassTile).Sprite.Picture())
 	tMap := tilemap.New(tiles, batch, tileSize)
-	// rebatch
-	tMap.Rebatch()
+
+	// create the tilemap render
+	tmapRender := render.NewTilemapRender(spriteSheet, map[tilemap.TileType]*pixel.Sprite{
+		GrassTile: GetTileSprite(spriteSheet, GrassTile).Sprite,
+		DirtTile:  GetTileSprite(spriteSheet, DirtTile).Sprite,
+		WaterTile: GetTileSprite(spriteSheet, WaterTile).Sprite,
+	})
+	// batch
+	tmapRender.Batch(tMap)
 
 	// create people/hogs
 	spawnPoint := pixel.V(float64(tileSize*mapSize/2), float64(tileSize*mapSize/2))
@@ -191,7 +198,7 @@ func run() {
 		// draw the sprites
 
 		// draw the tilemap
-		tMap.Draw(win)
+		tmapRender.Draw(win)
 
 		// draw the person
 		for i := range hogs {
